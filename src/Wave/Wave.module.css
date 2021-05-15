@@ -1,0 +1,16 @@
+.cell {
+    display: flex;
+    width: 101%;
+    height: 101%;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.cell svg path {
+    --path: 'M 0 50 C 50 -120 50 220 100 50';
+    --color: #000000;
+
+    d: path(var(--path));
+    stroke: var(--color);
+    transition: d 0.5s, stroke 1s;
+}
