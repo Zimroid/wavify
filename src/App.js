@@ -1,76 +1,114 @@
 import './App.css';
 import styles from './App.module.css';
-import SquareGrid from './SquareGrid/SquareGrid';
 import SquareCell from './SquareCell/SquareCell';
 import Wave from './Wave/Wave';
 import { useState } from 'react';
+import FullSizeGrid from './FullSizeGrid/FullSizeGrid';
+import useTick from './useTick/useTick';
 
-function App() {
+export default function App() {
+  /** The vertical size of the waves */
   const intensity = 50;
+
+  /** The number of waves for the longest side of the image */
   const maxLength = 60;
 
-  // TODO to refactor
+  /** The list of waves component to display in the grid */
+  const [cells, setCells] = useState();
 
-  const zeroFiller = (text, nbChar) => {
-    let res = text;
-    while (res.length < nbChar) {
+  /** The list of image available to display (saved as a list of waveComponent to display in the grid) */
+  const [images, setImages] = useState([]);
+
+  /** The index of the current image displayed from images */
+  const [currentImage, setCurrentImage] = useState(0);
+
+  /** To get a string of at least given size by puting zeros at the left */
+  const fillStringWithZero = (originalText, nbCharInOutput) => {
+    let res = originalText;
+    while (res.length < nbCharInOutput) {
       res = `0${res}`;
     }
     return res;
   };
 
-  const hexaToColor = (hexa) => {
-    return `#${zeroFiller(hexa.r, 2)}${zeroFiller(hexa.g, 2)}${zeroFiller(hexa.b, 2)}${zeroFiller(hexa.a, 2)}`
+  /** To get a string usable as a css color */
+  const colorObjectToHexa = (colorObject) => {
+    return `#${fillStringWithZero(colorObject.r, 2)}${fillStringWithZero(colorObject.g, 2)}${fillStringWithZero(colorObject.b, 2)}${fillStringWithZero(colorObject.a, 2)}`
   }
 
-  const computeColorAndGreyLvlForPartImage = (left, right, top, bottom, canvas) => {
-    const nbValues = (right - left) * (bottom - top);
-    const somme = {r: 0, g: 0, b: 0, a: 0};
-    for (let i = left; i < right; i++) {
-      for (let j = top; j < bottom; j++) {
-        const rawColor = canvas.getContext('2d').getImageData(i, j, 1, 1).data;
-        somme.r += rawColor[0];
-        somme.g += rawColor[1];
-        somme.b += rawColor[2];
-        somme.a += rawColor[3];
-      }
+  /** To get the avergage color and the greyscale of a pixel array */
+  const computeAverageColorAndGreyLvlFromPixelsArray = (pixelsToCompute) => {
+    const pixelSommeByColorComposant = {r: 0, g: 0, b: 0, a: 0};
+    pixelsToCompute.forEach(pixel => {
+      pixelSommeByColorComposant.r += pixel[0];
+      pixelSommeByColorComposant.g += pixel[1];
+      pixelSommeByColorComposant.b += pixel[2];
+      pixelSommeByColorComposant.a += pixel[3];
+    });
+    const averageColor = {
+      r: Math.round(pixelSommeByColorComposant.r / pixelsToCompute.length),
+      g: Math.round(pixelSommeByColorComposant.g / pixelsToCompute.length),
+      b: Math.round(pixelSommeByColorComposant.b / pixelsToCompute.length),
+      a: Math.round(pixelSommeByColorComposant.a / pixelsToCompute.length),
     }
-    const average = {
-      r: Math.round(somme.r / nbValues),
-      g: Math.round(somme.g / nbValues),
-      b: Math.round(somme.b / nbValues),
-      a: Math.round(somme.a / nbValues),
-    }
-    const hexa = {
-      r: average.r.toString(16),
-      g: average.g.toString(16),
-      b: average.b.toString(16),
-      a: average.a.toString(16),
+    const avergageColorInHexa = {
+      r: averageColor.r.toString(16),
+      g: averageColor.g.toString(16),
+      b: averageColor.b.toString(16),
+      a: averageColor.a.toString(16),
     }
 
     return {
-      color: hexaToColor(hexa),
-      grey: (average.r + average.g + average.b) / 3,
+      color: colorObjectToHexa(avergageColorInHexa),
+      grey: (averageColor.r + averageColor.g + averageColor.b) / 3,
     };
   }
 
-  const gridFiller = (gridWidth, gridHeight, canvas) => {
-    const listCell = [];
-    const canvasElementWidth = canvas.width / gridWidth;
-    const canvasElementHeight = canvas.height / gridHeight;
+  /** Reduce a two dimensional pixel array from a given canvas to a single dimension array */
+  const partImageToArray = (boundaries, canvas) => {
+    const pixelsToCompute = [];
+    for (let i = boundaries.left; i < boundaries.right; i++) {
+      for (let j = boundaries.top; j < boundaries.bottom; j++) {
+        const originalPixel = canvas.getContext('2d').getImageData(i, j, 1, 1).data;
+        pixelsToCompute.push(originalPixel);
+      }
+    }
+
+    return pixelsToCompute;
+  }
+
+  /** To get the avergage color and the greyscale of a given canvas part */
+  const computeColorAndGreyLvlForPartImage = (boundaries, canvas) => {
+    const pixelsToCompute = partImageToArray(boundaries, canvas);
+    return computeAverageColorAndGreyLvlFromPixelsArray(pixelsToCompute);
+  }
+
+  /** To get the boundary coordinates */
+  const comuteSubImageBoundaries = (top, left, height, width) => {
+    return {
+      left: Math.round(left),
+      right: Math.round(left + width - 1),
+      top: Math.round(top),
+      bottom: Math.round(top + height - 1),
+    }
+  }
+
+  /** To get a the config of all waves generated by the given canvas */
+  const getListWaveConfigFromCanvas = (gridWidth, gridHeight, canvas) => {
+    const listWaveConfig = [];
+    
+    const canvasSubPartWidth = canvas.width / gridWidth;
+    const canvasSubPartHeight = canvas.height / gridHeight;
     
     let darkest = 255;
     let brightest = 0;
 
     for(let i = 0; i < gridWidth; i++) {
       for (let j = 0; j < gridHeight; j++) {
-        const left = Math.round(canvasElementWidth * i);
-        const right = Math.round(left + canvasElementWidth - 1);
-        const top = Math.round(canvasElementHeight * j);
-        const bottom = Math.round(top + canvasElementHeight - 1);
-        const {color, grey} = computeColorAndGreyLvlForPartImage(left, right, top, bottom, canvas);
+        const boundaries = comuteSubImageBoundaries(canvasSubPartHeight * j, canvasSubPartWidth * i, canvasSubPartHeight, canvasSubPartWidth)
+        const {color, grey} = computeColorAndGreyLvlForPartImage(boundaries, canvas);
   
-        listCell.push({
+        listWaveConfig.push({
           x: i,
           y: j,
           color: color,
@@ -86,67 +124,126 @@ function App() {
       }
     }
 
-    return listCell.map(cell => {
-      const nbPeriod = Math.round((cell.grey - darkest) / (brightest - darkest) * 4);
-      return <SquareCell x={cell.x} y={cell.y}>
-        <Wave nbPeriod={nbPeriod === 0 ? 1 : nbPeriod} intensity={nbPeriod === 0 ? 0 : intensity} color={cell.color}></Wave>
+    return { listWaveConfig, darkest, brightest };
+  }
+
+  /** Generate the waves component based on the given config */
+  const generateWaveFromConfig = (listWaveConfig, darkest, brightest) => {
+    return listWaveConfig.map((waveConfig, index) => {
+      const nbPeriod = Math.round((waveConfig.grey - darkest) / (brightest - darkest) * 4);
+
+      return <SquareCell x={waveConfig.x} y={waveConfig.y} key={'square'+index}>
+        <Wave nbPeriod={nbPeriod === 0 ? 1 : nbPeriod} intensity={nbPeriod === 0 ? 0 : intensity} color={waveConfig.color} key={'wave'+index}></Wave>
       </SquareCell>
     });
   }
 
-  const [grid, setGrid] = useState({width: 0, height: 0});
-  const [cells, setCells] = useState();
+  /** Get the waves component from a given canvas */
+  const getListWaveFromCanvas = (gridWidth, gridHeight, canvas) => {
+    const { listWaveConfig, darkest, brightest } = getListWaveConfigFromCanvas(gridWidth, gridHeight, canvas);
+    return generateWaveFromConfig(listWaveConfig, darkest, brightest);
+  }
 
-  const loaded = (image) => {
+  /** Create an hidden canvas and display the given image */
+  const createHiddenCanvasFromImage = (image) => {
     const canvas = document.createElement('canvas');
     canvas.width = image.width;
     canvas.height = image.height;
     canvas.getContext('2d').drawImage(image, 0, 0, image.width, image.height);
 
-    let gridWidth = 0;
-    let gridHeight = 0; 
-    if (image.width > image.height) {
-      const coef = image.width / maxLength;
-      gridWidth = maxLength;
-      gridHeight = Math.round(image.height / coef);
-    } else {
-      const coef = image.height / maxLength;
-      gridWidth = Math.round(image.width / coef);
-      gridHeight = maxLength;
-    }
-    setGrid({width: gridWidth, height: gridHeight});
-
-    setCells(gridFiller(gridWidth, gridHeight, canvas));
-    canvas.remove();
+    return canvas;
   }
 
-  const handleImageLoad = (event) => {
+  /** To get the grid size based on the image proportion and the max grid size */
+  const computeGridSizeFromImage = ({width, height}) => {
+    let gridWidth = 0;
+    let gridHeight = 0; 
+
+    if (width > height) {
+      const coef = width / maxLength;
+      gridWidth = maxLength;
+      gridHeight = Math.round(height / coef);
+    } else {
+      const coef = height / maxLength;
+      gridWidth = Math.round(width / coef);
+      gridHeight = maxLength;
+    }
+
+    return { gridWidth, gridHeight };
+  }
+
+  /** To get a list of wave component to display in grif from a given image */
+  const getListWaveFromImage = (image) => {
+    const canvas = createHiddenCanvasFromImage(image);
+    const { gridWidth, gridHeight } = computeGridSizeFromImage(image)
+
+    const imgWavified = getListWaveFromCanvas(gridWidth, gridHeight, canvas);
+    canvas.remove();
+
+    return imgWavified;
+  }
+
+  /** To display the given wavified image */
+  const displayWavifiedImage = (imgWavified) => {
+    setCells(imgWavified);
+  }
+
+  /** To display the given wavified image if nothing it currently displayed */
+  const displayWavifiedImageIfNothingIsCurrentlyDisplayed = (imgWavified) => {
+    if (!cells) {
+      displayWavifiedImage(imgWavified);
+    }
+  }
+
+  /** To add the given wavified image to the images list */
+  const addWavifiedImageToImagesList = (imgWavified) => {
+    const newImages = [...images];
+    newImages.push(imgWavified);
+    setImages(newImages);
+  }
+
+  /** To handle a new image loaded */
+  const imgLoaded = (image) => {
+    const imgWavified = getListWaveFromImage(image);
+    addWavifiedImageToImagesList(imgWavified);
+    displayWavifiedImageIfNothingIsCurrentlyDisplayed(imgWavified);
+  }
+
+  /** To handle an image from an input file */
+  const handleImageLoadFromInput = (event) => {
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.src = e.target.result;
-        img.onload = () => { loaded(img) };
+        img.onload = () => { imgLoaded(img) };
     }
     reader.readAsDataURL(event.target.files[0]);
   }
 
+  /** To handle an image from an img html balise */
+  const handleImageLoadFromImgBalise = (image) => {
+    imgLoaded(image.target);
+  }
+
+  /** To display the next image in the images list */
+  const displayNextImage = () => {
+    setCurrentImage((currentImage + 1) % images.length);
+    displayWavifiedImage(images[currentImage]);
+  }
+
+  /** To display a new image every 30 seconds */
+  useTick(() => {
+    displayNextImage();
+  }, 30000);
 
   return (
-    <div className={styles.demoWrapper}>
-      <div className={styles.demoSource}>
-        <input type="file" id="imageLoader" name="imageLoader" onChange={handleImageLoad}/>
-      </div>
-      <div className={styles.demo}>
-        <div className={styles.demoGrid}>
-          <div className={styles.demoGridWrapper}>
-            <SquareGrid nbColumns={grid.width} nbRows={grid.height}>
-              {cells}
-            </SquareGrid>
-          </div>
-        </div>
-      </div>
+    <div className={styles.demoFullSize}>
+      <img src="image.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
+      <img src="link.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
+      <FullSizeGrid>
+        {cells}
+      </FullSizeGrid>
+      <input type="file" id="imageLoader" name="imageLoader" className={styles.inputTest} onChange={handleImageLoadFromInput}/>
     </div>
   );
 }
-
-export default App;

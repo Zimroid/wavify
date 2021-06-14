@@ -12,5 +12,5 @@
 
     d: path(var(--path));
     stroke: var(--color);
-    transition: d 0.5s, stroke 1s;
+    transition: d 1s, stroke 1s;
 }
