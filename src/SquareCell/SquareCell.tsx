@@ -8,8 +8,9 @@ interface Props {
 }
 
 export default function SquareCell({x, y, children}: Props) {
+// let a:number = "toto";
     return (
-        <div className={styles.cellWrapper} style={{"--x": x, "--y": y} as React.CSSProperties}>
+        <div className={styles.cellWrapper} style={{"--x": x, "--y": y, color: "red"}}>
             <div className={styles.cell}>
                 {children}
             </div>
