@@ -3,7 +3,7 @@ import styles from './App.module.css';
 import { ChangeEvent, SyntheticEvent, useEffect, useRef, useState } from 'react';
 import useTick from './useTick/useTick';
 import WavifiedImage from './WavifiedImage/WavifiedImage';
-import { imageWavified } from './type';
+import { ImageWavified } from './type';
 import { getListWaveFromImage } from './WavifiedImage/WavifyUtils';
 import useScreenSize from './useScreenSize/useScreenSize';
 import SquareGrid from './SquareGrid/SquareGrid';
@@ -18,7 +18,7 @@ export default function App() {
   const delayTick = useRef(1);
   const tickCanStart = useRef(false);
 
-  const defaultImageWavified: imageWavified = {
+  const defaultImageWavified: ImageWavified = {
     id: 0,
     listWave: [],
     darkest: 0,
@@ -28,7 +28,7 @@ export default function App() {
   /** The list of wavified image to display */
   const [imageWavified, setImageWavified] = useState(defaultImageWavified);
 
-  const defaultListImagesWavified: imageWavified[] = []
+  const defaultListImagesWavified: ImageWavified[] = []
 
   /** The list of wavified image available to display */
   const [listImagesWavified, setListImagesWavified] = useState(defaultListImagesWavified);
@@ -37,20 +37,20 @@ export default function App() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const { width: widthScreen, height: heightScreen } = useScreenSize();
-  const [grid, setgrid] = useState({ width: 0, height: 0 });
+  const [grid, setGrid] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     if (widthScreen > heightScreen) {
       const width = maxLength;
-      setgrid({ width, height: Math.round(heightScreen / widthScreen * width) });
+      setGrid({ width, height: Math.round(heightScreen / widthScreen * width) });
     } else {
       const height = maxLength;
-      setgrid({ width: Math.round(widthScreen / heightScreen * height), height });
+      setGrid({ width: Math.round(widthScreen / heightScreen * height), height });
     }
   }, [widthScreen, heightScreen]);
 
   /** To display the given wavified image */
-  const displayWavifiedImage = (imgWavified: imageWavified) => {
+  const displayWavifiedImage = (imgWavified: ImageWavified) => {
     setImageWavified(imgWavified);
   }
 
@@ -62,7 +62,7 @@ export default function App() {
   }, [listImagesWavified])
 
   /** To add the given wavified image to the images list */
-  const addWavifiedImageToImagesList = (imgWavified: imageWavified) => {
+  const addWavifiedImageToImagesList = (imgWavified: ImageWavified) => {
     const newImages = [...listImagesWavified];
     newImages.push(imgWavified);
     setListImagesWavified(newImages);
@@ -120,7 +120,7 @@ export default function App() {
         delayTick.current = delayTick.current - 1;
       }
     }
-  }, 10000);
+  }, 15000);
 
   return (
     <div className={styles.demoFullSize}>
@@ -128,7 +128,7 @@ export default function App() {
       <img src="link.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
       <img src="mona.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
       <SquareGrid nbColumns={grid.width} nbRows={grid.height}>
-        <WavifiedImage imageConfig={imageWavified} intensity={intensity}></WavifiedImage>
+        <WavifiedImage imageConfig={imageWavified} intensity={intensity} width={grid.width} height={grid.height}></WavifiedImage>
       </SquareGrid>
       <input type="file" id="imageLoader" name="imageLoader" className={styles.inputTest} onChange={handleImageLoadFromInput}/>
     </div>

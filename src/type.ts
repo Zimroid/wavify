@@ -1,11 +1,11 @@
-export interface color {
+export interface Color {
     r: string;
     g: string;
     b: string;
     a: string;
 }
 
-export interface box {
+export interface Box {
     top: number;
     left: number;
     bottom: number;
@@ -19,7 +19,7 @@ export interface WaveConfig {
     color: string;
 }
   
-export interface imageWavified {
+export interface ImageWavified {
     id: number;
     listWave: WaveConfig[];
     darkest: number;
