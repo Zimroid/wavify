@@ -25,13 +25,13 @@ export default function WavifiedImage({imageConfig, intensity}: Props) {
                 newImage.current = imageConfig;
             }
             clearTimeout(timer2);
-        }, 1000);
+        }, 1200);
         const timer3 = setTimeout(() => {
             if (tmp !== 0) {
                 setPhase(WavePhase.DISPLAYED);
             }
             clearTimeout(timer3);
-        }, 1600);
+        }, 2000);
         if (tmp === 0) {
             inited.current = imageConfig.id;
             newImage.current = imageConfig;
@@ -52,7 +52,7 @@ export default function WavifiedImage({imageConfig, intensity}: Props) {
                     intensity: nbPeriod === 0 ? 0 : intensity,
                     color: waveConfig.color,
                     phase: phase
-                }} key={'wave'+waveConfig.x+'/'+waveConfig.y}/>
+                }} key={'wave'+index}/>
             </SquareCell>
         })
     }</>;

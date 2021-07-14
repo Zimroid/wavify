@@ -13,7 +13,7 @@ export default function App() {
   const intensity = 50;
 
   /** The number of waves for the longest side of the image */
-  const maxLength = 60;
+  const maxLength = 45;
 
   const delayTick = useRef(1);
   const tickCanStart = useRef(false);
