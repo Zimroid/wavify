@@ -1,49 +1,62 @@
 import { useEffect, useRef, useState } from 'react';
 import SquareCell from '../SquareCell/SquareCell';
-import { imageWavified } from '../type';
+import { ImageWavified } from '../type';
+import useTick from '../useTick/useTick';
 import { WavePhase } from '../Wave/type';
 import Wave from '../Wave/Wave';
 
 interface Props {
-    imageConfig: imageWavified;
-    intensity: number
+    imageConfig: ImageWavified;
+    intensity: number;
+    width: number;
+    height: number;
 }
 
-export default function WavifiedImage({imageConfig, intensity}: Props) {
-    const inited = useRef(0);
-    const [phase, setPhase] = useState(WavePhase.DISPLAYED);
-    const newImage = useRef(imageConfig)
+export default function WavifiedImage({imageConfig, intensity, width}: Props) {
+    const [progress, setProgress] = useState(-10);
+    const imagePhase = useRef(imageConfig.listWave.map(() => WavePhase.DISPLAYED));
+
+    const [image, setImage] = useState(imageConfig)
+
+    useTick(() => {
+        if (progress <= 100) {
+            imagePhase.current = image.listWave.map((elt, index) => {
+                const position = (elt.x / width * 100);
+                if (elt.y % 2 === 0) {
+                    if (position <= progress) {
+                        return WavePhase.DISPLAYED;
+                    } else if (position <= progress + 1) {
+                        return WavePhase.WHITE_LINE_PREPARATION;
+                    } else if (position <= progress + 10) {
+                        return WavePhase.WHITE_LINE;
+                    }
+                } else {
+                    if (position >= 100 - progress) {
+                        return WavePhase.DISPLAYED;
+                    } else if (position >= 100 - (progress + 1)) {
+                        return WavePhase.WHITE_LINE_PREPARATION;
+                    } else if (position >= 100 - (progress + 10)) {
+                        return WavePhase.WHITE_LINE;
+                    }
+                }
+
+                return imagePhase.current[index];
+            });
+            setProgress(progress + 1);
+        }
+    }, 50);
 
     useEffect(() => {
-        const tmp = inited.current;
-        if (tmp !== 0) {
-            setPhase(WavePhase.WHITE_LINE);
-        }
-        const timer2 = setTimeout(() => {
-            if (tmp !== 0) {
-                setPhase(WavePhase.WHITE_LINE_PREPARATION);
-                newImage.current = imageConfig;
-            }
-            clearTimeout(timer2);
-        }, 1200);
-        const timer3 = setTimeout(() => {
-            if (tmp !== 0) {
-                setPhase(WavePhase.DISPLAYED);
-            }
-            clearTimeout(timer3);
-        }, 2000);
-        if (tmp === 0) {
-            inited.current = imageConfig.id;
-            newImage.current = imageConfig;
-        }
-        return () => {
-            clearTimeout(timer2);
-            clearTimeout(timer3);
-        }
+        setImage(image);
+    }, [progress]);
+
+    useEffect(() => {
+        setProgress(-10);
+        setImage(imageConfig);
     }, [imageConfig]);
 
     return <>{
-        newImage.current.listWave.map((waveConfig, index) => {
+        image.listWave.map((waveConfig, index) => {
             const nbPeriod = Math.round((waveConfig.grey - imageConfig.darkest) / (imageConfig.brightest - imageConfig.darkest) * 4);
 
             return <SquareCell x={waveConfig.x} y={waveConfig.y} key={'square'+index}>
@@ -51,7 +64,7 @@ export default function WavifiedImage({imageConfig, intensity}: Props) {
                     nbPeriod: nbPeriod === 0 ? 1 : nbPeriod,
                     intensity: nbPeriod === 0 ? 0 : intensity,
                     color: waveConfig.color,
-                    phase: phase
+                    phase: imagePhase.current[index]
                 }} key={'wave'+index}/>
             </SquareCell>
         })
