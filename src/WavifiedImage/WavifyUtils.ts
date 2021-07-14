@@ -84,8 +84,8 @@ export function getListWaveConfigFromCanvas(drawedImageWidth: number, drawedImag
   let darkest = 255;
   let brightest = 0;
 
-  const borderTopHeight = Math.round((gridHeight - drawedImageHeight) / 2);
-  const borderLeftWidth = Math.round((gridWidth - drawedImageWidth) / 2);
+  const borderTopHeight = Math.trunc((gridHeight - drawedImageHeight) / 2);
+  const borderLeftWidth = Math.trunc((gridWidth - drawedImageWidth) / 2);
 
   for(let i = 0; i < drawedImageWidth; i++) {
     for (let j = 0; j < drawedImageHeight; j++) {
@@ -177,24 +177,34 @@ export function createHiddenCanvasFromImage(image: HTMLImageElement): HTMLCanvas
 }
 
 /** To get the grid size based on the image proportion and the max grid size */
-export function computeDrawedGridSizeFromImage({width: originalImgageWidth, height: originalImageHeight}: {width: number, height: number}, outputImageWidth: number, outputImageHeight: number): { drawedImageWidth: number, drawedImageHeight: number } {
+export function computeDrawedGridSizeFromImage({width: originalImageWidth, height: originalImageHeight}: {width: number, height: number}, outputImageWidth: number, outputImageHeight: number): { drawedImageWidth: number, drawedImageHeight: number } {
   let drawedImageWidth = 0;
   let drawedImageHeight = 0;
 
-  if (originalImgageWidth > originalImageHeight) {
-    const coef = originalImgageWidth / outputImageWidth;
+  if (originalImageWidth > originalImageHeight) {
+    const coef = originalImageWidth / outputImageWidth;
     drawedImageWidth = outputImageWidth;
-    drawedImageHeight = Math.round(originalImageHeight / coef);
+    drawedImageHeight = Math.trunc(originalImageHeight / coef);
+  
+    if (drawedImageHeight > outputImageHeight) {
+      drawedImageWidth = Math.trunc(originalImageWidth / coef);
+      drawedImageHeight = outputImageHeight;
+    }
   } else {
     const coef = originalImageHeight / outputImageHeight;
-    drawedImageWidth = Math.round(originalImgageWidth / coef);
+    drawedImageWidth = Math.trunc(originalImageWidth / coef);
     drawedImageHeight = outputImageHeight;
+  
+    if (drawedImageWidth > outputImageWidth) {
+      drawedImageWidth = outputImageWidth;
+      drawedImageHeight = Math.trunc(originalImageHeight / coef);
+    }
   }
-
+  
   return { drawedImageWidth, drawedImageHeight };
 }
 
-/** To get a list of wave component to display in grif from a given image */
+/** To get a list of wave component to display in grid from a given image */
 export function getListWaveFromImage(image: HTMLImageElement, width: number, height: number): imageWavified {
   const canvas = createHiddenCanvasFromImage(image);
   const { drawedImageWidth, drawedImageHeight } = computeDrawedGridSizeFromImage(image, width, height);

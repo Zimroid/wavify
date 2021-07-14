@@ -42,7 +42,7 @@ export default function Wave({waveConfig}: Props) {
 
     /** To display a new wave */
     const goToNewPath = () => {
-        setPath(computePath(nbPeriodSaved.current, waveConfig.intensity));
+        setPath(computePath(waveConfig.nbPeriod, waveConfig.intensity));
         setDisplayedColor(waveConfig.color);
     }
 
