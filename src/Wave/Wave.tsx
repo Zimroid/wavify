@@ -70,7 +70,7 @@ export default function Wave({waveConfig}: Props) {
     return (
         <div className={styles.cell}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox={`-1 -1 101 101`}>
-                <path style={{"--path": `'${path}'`, "--color": displayedColor} as React.CSSProperties} strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round"/>
+                <path style={{"--path": `'${path}'`, "--color": displayedColor}} strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round"/>
             </svg>
         </div>
       );
