@@ -165,12 +165,28 @@ export function getListWaveConfigFromCanvas(drawedImageWidth: number, drawedImag
 /** Create an hidden canvas and display the given image */
 export function createHiddenCanvasFromImage(image: HTMLImageElement): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
-  canvas.width = image.width;
-  canvas.height = image.height;
+
+  let canvasComputedWidth = image.width;
+  let canvasComputedHeight = image.height;
+  const maxSize = 200;
+
+  if (canvasComputedWidth > maxSize || canvasComputedHeight > maxSize) {
+    const ratio = canvasComputedWidth / canvasComputedHeight;
+    if (canvasComputedWidth > canvasComputedHeight) {
+      canvasComputedWidth = maxSize;
+      canvasComputedHeight = maxSize / ratio;
+    } else {
+      canvasComputedWidth = maxSize * ratio;
+      canvasComputedHeight = maxSize;
+    }
+  }
+
+  canvas.width = canvasComputedWidth;
+  canvas.height = canvasComputedHeight;
 
   const tmp = canvas.getContext('2d');
   if (tmp) {
-    tmp.drawImage(image, 0, 0, image.width, image.height);
+    tmp.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width, canvas.height);
   }
 
   return canvas;
