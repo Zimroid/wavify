@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './Wave.module.css';
 import WaveConfig, { WavePhase } from './type';
 
@@ -35,37 +35,39 @@ export default function Wave({waveConfig}: Props) {
     const [path, setPath] = useState(computePath(waveConfig.nbPeriod, waveConfig.intensity));
 
     /** To be able to make a transition between the current wave and the new wave to display */
-    const goToWhiteLine = () => {
+    const goToWhiteLine = useCallback(() => {
         setPath(computePath(nbPeriodSaved.current, 1));
         setDisplayedColor('#424242');
-    }
+    }, []);
 
     /** To display a new wave */
-    const goToNewPath = () => {
+    const goToNewPath = useCallback(() => {
         setPath(computePath(waveConfig.nbPeriod, waveConfig.intensity));
         setDisplayedColor(waveConfig.color);
-    }
+    }, [waveConfig.nbPeriod, waveConfig.intensity, waveConfig.color]);
 
-    const prepareNewPath = () => {
+    const prepareNewPath = useCallback(() => {
         setPath(computePath(waveConfig.nbPeriod, 1));
         nbPeriodSaved.current = waveConfig.nbPeriod
         setDisplayedColor('#424242');
-    }
+    }, [waveConfig.nbPeriod]);
 
     useEffect(() => {
-        phase.current = waveConfig.phase;
-        switch (phase.current) {
-            case WavePhase.WHITE_LINE:
-                goToWhiteLine();
-                break;
-            case WavePhase.DISPLAYED:
-                goToNewPath();
-                break;
-            default:
-                prepareNewPath();
-                break;
-            }
-    }, [waveConfig.phase])
+        if (phase.current !== waveConfig.phase) {
+            phase.current = waveConfig.phase;
+            switch (phase.current) {
+                case WavePhase.WHITE_LINE:
+                    goToWhiteLine();
+                    break;
+                case WavePhase.DISPLAYED:
+                    goToNewPath();
+                    break;
+                default:
+                    prepareNewPath();
+                    break;
+                }
+        }
+    }, [waveConfig.phase, goToWhiteLine, goToNewPath, prepareNewPath])
 
     return (
         <div className={styles.cell}>

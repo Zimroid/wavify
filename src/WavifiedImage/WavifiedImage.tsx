@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { MutableRefObject, useEffect, useRef, useState } from 'react';
 import SquareCell from '../SquareCell/SquareCell';
 import { ImageWavified } from '../type';
 import useTick from '../useTick/useTick';
@@ -12,14 +12,17 @@ interface Props {
     height: number;
 }
 
-export default function WavifiedImage({imageConfig, intensity, width}: Props) {
+export default function WavifiedImage({imageConfig, intensity, width, height}: Props) {
     const [progress, setProgress] = useState(-10);
-    const imagePhase = useRef(imageConfig.listWave.map(() => WavePhase.DISPLAYED));
+    const imagePhase: MutableRefObject<WavePhase[]> = useRef([]);
 
-    const [image, setImage] = useState(imageConfig)
+    const [image, setImage] = useState(imageConfig);
+    const firstDisplay = useRef(0);
+
+    const biggestSide = width > height ? width : height;
 
     useTick(() => {
-        if (progress <= 100) {
+        if (progress <= 100 && firstDisplay.current > 2) {
             imagePhase.current = image.listWave.map((elt, index) => {
                 const position = (elt.x / width * 100);
                 if (elt.y % 2 === 0) {
@@ -42,17 +45,21 @@ export default function WavifiedImage({imageConfig, intensity, width}: Props) {
 
                 return imagePhase.current[index];
             });
-            setProgress(progress + 1);
+            setProgress(progress + Math.round(biggestSide / width));
         }
     }, 50);
 
     useEffect(() => {
-        setImage(image);
+        setImage(prevImage => (prevImage));
     }, [progress]);
 
     useEffect(() => {
         setProgress(-10);
         setImage(imageConfig);
+        if (firstDisplay.current < 3) {
+            firstDisplay.current = firstDisplay.current + 1;
+            imagePhase.current = imageConfig.listWave.map(() => WavePhase.DISPLAYED);
+        }
     }, [imageConfig]);
 
     return <>{

@@ -55,7 +55,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (imageWavified.id === 0 && listImagesWavified.length > 0 && !tickCanStart.current) {
+    if (listImagesWavified.length > 0 && !tickCanStart.current) {
       displayWavifiedImage(listImagesWavified[0]);
       tickCanStart.current = true;
     }
@@ -110,7 +110,7 @@ export default function App() {
     }
   }
 
-  /** To display a new image every 10 seconds */
+  /** To display a new image every 20 seconds */
   useTick(() => {
     if (tickCanStart) {
       if (delayTick.current === 0) {
@@ -120,13 +120,14 @@ export default function App() {
         delayTick.current = delayTick.current - 1;
       }
     }
-  }, 15000);
+  }, 20000);
 
   return (
     <div className={styles.demoFullSize}>
-      <img src="image.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
+      <img src="nuit.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
       <img src="link.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
       <img src="mona.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
+      <img src="mario.jpg" onLoad={handleImageLoadFromImgBalise} className={styles.hideImgTest} alt="test"></img>
       <SquareGrid nbColumns={grid.width} nbRows={grid.height}>
         <WavifiedImage imageConfig={imageWavified} intensity={intensity} width={grid.width} height={grid.height}></WavifiedImage>
       </SquareGrid>
