@@ -1,6 +1,9 @@
 # Wavify
 
 Another project to learn React, convert a given picture to a pixelated copy that use sin waves instead of pixels.
+
+[Preview](https://zimroid.github.io/wavify) (Only work on chrome for now)
+
 (Inspired by the work of u/pidy90 https://www.reddit.com/user/pidy90/)
 
 ## How it's made
